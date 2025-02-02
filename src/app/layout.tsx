@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import AuthProvider from "@/context/AuthProvider";
+import './globals.css'
 
-export const metadata: Metadata = {
-  title: "ShadowTalk",
-  description: "Hidden yet powerful messages",
-};
+// import { Toaster } from "@/components/ui/toaster"
+// import Navbar from "@/components/Navbar";
+
 
 export default function RootLayout({
   children,
@@ -13,9 +12,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <AuthProvider>
       <body>
+        {/* <Navbar /> */}
         {children}
+        {/* <Toaster /> */}
       </body>
+      </AuthProvider>
     </html>
   );
 }
