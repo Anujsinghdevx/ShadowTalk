@@ -93,6 +93,8 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -150,20 +152,17 @@ function toast({ ...props }: Toast) {
     })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
-  // Dispatching the action after the component has mounted
-  React.useEffect(() => {
-    dispatch({
-      type: "ADD_TOAST",
-      toast: {
-        ...props,
-        id,
-        open: true,
-        onOpenChange: (open) => {
-          if (!open) dismiss()
-        },
+  dispatch({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss()
       },
-    })
-  }, [props]) // Re-run the effect if props change
+    },
+  })
 
   return {
     id: id,
@@ -173,13 +172,7 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  const [state, setState] = React.useState<State>(() => {
-    // Hydration check: Only use the in-memory state on the client-side
-    if (typeof window !== 'undefined') {
-      return memoryState
-    }
-    return { toasts: [] } // Default state for SSR
-  })
+  const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
     listeners.push(setState)
@@ -189,7 +182,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [])
+  }, [state])
 
   return {
     ...state,

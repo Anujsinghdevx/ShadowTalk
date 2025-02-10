@@ -1,9 +1,8 @@
 "use client"
 import AuthProvider from "@/context/AuthProvider";
 import './globals.css'
-
 import { Toaster } from "@/components/ui/toaster"
-// import Navbar from "@/components/Navbar";
+
 
 
 export default function RootLayout({
@@ -17,7 +16,7 @@ export default function RootLayout({
       <AuthProvider>
         <body >
           {children}
-          <Toaster />
+          <Toaster/>
         </body>
       </AuthProvider>
     </html>

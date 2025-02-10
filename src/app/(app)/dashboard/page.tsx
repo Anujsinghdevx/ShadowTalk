@@ -156,7 +156,7 @@ function UserDashboard() {
             className="input input-bordered w-3/4 p-2 mr-2"
           />
           <Button onClick={copyToClipboard} className='mr-2'>Copy to clipboard</Button>
-          <WhatsappShareButton url={profileUrl}><WhatsappIcon className='m-1' size={32} round={true}/></WhatsappShareButton>
+          <WhatsappShareButton url={profileUrl} title="Check this out!"><WhatsappIcon className='m-1' size={32} round={true}/></WhatsappShareButton>
           <TelegramShareButton url={profileUrl}><TelegramIcon className='m-1' size={32} round={true}/></TelegramShareButton>
           <LinkedinShareButton url={profileUrl}><LinkedinIcon className='m-1' size={32} round={true}/></LinkedinShareButton>
         </div>
