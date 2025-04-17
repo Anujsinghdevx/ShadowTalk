@@ -1,24 +1,16 @@
-"use client"
-import AuthProvider from "@/context/AuthProvider";
-import './globals.css'
-import { Toaster } from "@/components/ui/toaster"
+// app/layout.tsx (Server Component)
+import "./globals.css";
+import Providers from "../components/Providers";
 
-
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body >
-        <AuthProvider>
+      <body>
+        <Providers>
           {children}
-          <Toaster />
-        </AuthProvider>
+        </Providers>
       </body>
-
     </html>
   );
 }
+
