@@ -17,7 +17,7 @@ export async function sendVerificationEmail(
         return{
             success:true,message:'Verification email send successfully'
         }
-    } catch () {
+    } catch (emailError) {
         console.error("error sending email")
         return{success:false,message:'Failed to send verification email'}
     }

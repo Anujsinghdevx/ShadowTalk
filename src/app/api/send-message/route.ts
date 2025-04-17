@@ -42,7 +42,7 @@ export async function POST(request:Request){
         )
 
 
-    } catch () {
+    } catch (error) {
         console.log("failed to send message")
         return Response.json(
             {
