@@ -18,7 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { UseToast } from '@/hooks/use-toast';
 import * as z from 'zod';
 import { ApiResponse } from '@/types/ApiResponse';
 import Link from 'next/link';
@@ -38,7 +38,7 @@ export default function SendMessage() {
   const params = useParams<{ username: string }>();
   const username = params?.username || 'guest'; // Fallback in case username is null
 
-  const { toast } = useToast();
+  const { toast } = UseToast();
 
   const {
     complete,

@@ -3,7 +3,7 @@
 import React from 'react';
 import axios, { AxiosError } from 'axios';
 import dayjs from 'dayjs';
-import { X,Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Message } from '@/model/User';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from './ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { UseToast } from '@/hooks/use-toast';
 import { ApiResponse } from '@/types/ApiResponse';
 
 type MessageCardProps = {
@@ -27,7 +27,7 @@ type MessageCardProps = {
 };
 
 export function MessageCard({ message, onMessageDelete }: MessageCardProps) {
-  const { toast } = useToast();
+  const { toast } = UseToast();
 
   const handleDeleteConfirm = async () => {
     try {

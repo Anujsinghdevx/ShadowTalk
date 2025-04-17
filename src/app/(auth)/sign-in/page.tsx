@@ -3,18 +3,18 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import Link from "next/link"
-import { useToast } from "@/hooks/use-toast"
+import { UseToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form,FormField, FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { signInSchema } from "@/schemas/signInSchema"
 import { signIn } from "next-auth/react"
 
 
-const page = () => {
+const Page = () => {
   
-  const { toast } = useToast()
+  const { toast } = UseToast()
   const router = useRouter()
   
 
@@ -100,4 +100,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

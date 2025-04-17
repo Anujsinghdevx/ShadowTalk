@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { useToast } from '@/hooks/use-toast'
+import { UseToast } from '@/hooks/use-toast'
 import { verifySchema } from '@/schemas/verifySchema'
 import { ApiResponse } from '@/types/ApiResponse'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,7 +15,7 @@ import * as z from 'zod'
 const VerifyAccount = () => {
     const router = useRouter()
     const param = useParams<{username:string}>()
-    const {toast} = useToast()
+    const {toast} = UseToast()
     
     const form=useForm<z.infer<typeof verifySchema>>({
         resolver: zodResolver(verifySchema),

@@ -7,23 +7,23 @@ import { useEffect, useState } from 'react'
 import axios, { AxiosError } from "axios"
 import { ApiResponse } from "@/types/ApiResponse"
 import { useDebounceCallback } from 'usehooks-ts'
-import { useToast } from "@/hooks/use-toast"
+import { UseToast } from "@/hooks/use-toast"
 import { useRouter } from 'next/navigation'
 import { Loader2 } from "lucide-react"
 import { signUpSchema } from '@/schemas/signUpSchema'
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
 
 
-const page = () => {
+const Page = () => {
     const [username, setUsername] = useState('')
     const [usernameMessage, setUsernameMessage] = useState('')
     const [isCheckingUsername, setIsCheckingUsername] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const debounced = useDebounceCallback(setUsername, 500)
-    const { toast } = useToast()
+    const { toast } = UseToast()
     const router = useRouter()
     const form = useForm<z.infer<typeof signUpSchema>>({
         resolver: zodResolver(signUpSchema),
@@ -69,7 +69,7 @@ const page = () => {
         } catch (error) {
             console.log("error in sign up", error)
             const axiosError = error as AxiosError<ApiResponse>
-            let errorMessage = axiosError.response?.data.message
+            const errorMessage = axiosError.response?.data.message
 
             toast({
                 title: " ⚠️ Sign-up failed",
@@ -157,4 +157,4 @@ const page = () => {
     )
 }
 
-export default page
+export default Page
