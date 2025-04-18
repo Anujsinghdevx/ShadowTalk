@@ -1,5 +1,6 @@
-'use client'
-import React from 'react'
+'use client';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail } from 'lucide-react';
 import messages from '@/messages.json';
@@ -10,42 +11,55 @@ import {
   CarouselItem,
 } from '@/components/ui/carousel';
 
-const page = () => {
+// Define the shape of a message to make TypeScript happy
+interface Message {
+  title: string;
+  content: string;
+  received: string;
+}
+
+const Page: React.FC = () => {
   return (
     <>
-      <main className="flex-grow flex flex-col items-center justify-center px-4 md:px-24 py-12 bg-indigo-900 text-white"
-      style={{
-        backgroundImage: 'url(/bg1.jpg)',
-        width: '100%',
-        height: '100%',
-        backgroundSize: 'cover',
-        boxSizing: 'border-box' 
-      }}>
-        <section className="text-center mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-5xl font-bold">
+      <main
+        className="flex-grow flex flex-col items-center justify-center px-4 md:px-24 py-12 bg-indigo-900 text-white"
+        style={{
+          backgroundImage: 'url(/bg1.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        {/* Hero Section */}
+        <section className="text-center mb-10 max-w-3xl">
+          <h1 className="text-3xl md:text-5xl font-bold leading-tight drop-shadow-lg">
             Dive into the World of Anonymous Feedback
           </h1>
-          <p className="mt-3 md:mt-4 text-base md:text-lg">
-          ShadowTalk– Hidden yet powerful messages
+          <p className="mt-4 text-base md:text-lg text-gray-100">
+            ShadowTalk – Hidden yet powerful messages
           </p>
         </section>
 
+        {/* Carousel Section */}
         <Carousel
-          plugins={[Autoplay({ delay: 2000 })]}
-          className="w-full max-w-lg md:max-w-xl"
+          plugins={[Autoplay({ delay: 3000 })]}
+          className="w-full max-w-lg md:max-w-2xl"
         >
           <CarouselContent>
-            {messages.map((message, index) => (
+            {(messages as Message[]).map((message, index) => (
               <CarouselItem key={index} className="p-4">
-                <Card>
+                <Card className="bg-white text-black shadow-lg">
                   <CardHeader>
-                    <CardTitle>{message.title}</CardTitle>
+                    <CardTitle className="text-gray-600 text-lg font-semibold">
+                      {message.title}
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="flex flex-col md:flex-row items-start space-y-2 md:space-y-0 md:space-x-4">
-                    <Mail className="flex-shrink-0" />
+                  <CardContent className="flex flex-col md:flex-row items-start gap-3">
+                    <Mail className="text-gray-600" />
                     <div>
                       <p>{message.content}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500 mt-2">
                         {message.received}
                       </p>
                     </div>
@@ -57,11 +71,12 @@ const page = () => {
         </Carousel>
       </main>
 
-      <footer className="text-center p-4 md:p-6 bg-black text-white">
-        © 2025 Shadow Talk . All rights reserved.
+      {/* Footer */}
+      <footer className="text-center p-4 md:p-6 bg-black text-white text-sm md:text-base">
+        © {new Date().getFullYear()} ShadowTalk. All rights reserved.
       </footer>
     </>
-  )
-}
+  );
+};
 
-export default page
+export default Page;

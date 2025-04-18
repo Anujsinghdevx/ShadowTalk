@@ -1,160 +1,205 @@
-'use client'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import * as z from 'zod'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import axios, { AxiosError } from "axios"
-import { ApiResponse } from "@/types/ApiResponse"
-import { useDebounceCallback } from 'usehooks-ts'
-import { UseToast } from "@/hooks/use-toast"
-import { useRouter } from 'next/navigation'
-import { Loader2 } from "lucide-react"
-import { signUpSchema } from '@/schemas/signUpSchema'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+'use client';
 
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import axios, { AxiosError } from 'axios';
+import { useDebounceCallback } from 'usehooks-ts';
+import { Loader2 } from 'lucide-react';
 
+import { UseToast } from '@/hooks/use-toast'; // ✅ Kept exactly as you wrote it
+import { signUpSchema } from '@/schemas/signUpSchema';
+import { ApiResponse } from '@/types/ApiResponse';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
-const Page = () => {
-    const [username, setUsername] = useState('')
-    const [usernameMessage, setUsernameMessage] = useState('')
-    const [isCheckingUsername, setIsCheckingUsername] = useState(false)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const debounced = useDebounceCallback(setUsername, 500)
-    const { toast } = UseToast()
-    const router = useRouter()
-    const form = useForm<z.infer<typeof signUpSchema>>({
-        resolver: zodResolver(signUpSchema),
-        defaultValues: {
-            username: '',
-            email: '',
-            password: ''
-        }
-    })
+const Page: React.FC = () => {
+  const [username, setUsername] = useState('');
+  const [usernameMessage, setUsernameMessage] = useState('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        const checkUsernameUnique = async () => {
+  const debounced = useDebounceCallback(setUsername, 500);
+  const { toast } = UseToast(); // ✅ no change
+  const router = useRouter();
 
-            if (username) {
+  const form = useForm<z.infer<typeof signUpSchema>>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+    },
+  });
 
-                setIsCheckingUsername(true)
-                setUsernameMessage('')
-                try {
-                    const response = await axios.get(`/api/check-username-unique?username=${username}`)
-                    setUsernameMessage(response.data.message)
-                } catch (error) {
-                    const axiosError = error as AxiosError<ApiResponse>
-                    setUsernameMessage(axiosError.response?.data.message || 'An error occurred')
-                }
-                finally {
-                    setIsCheckingUsername(false)
-                }
-            }
-        }
-        checkUsernameUnique()
-    }, [username])
+  // Check username uniqueness
+  useEffect(() => {
+    const checkUsernameUnique = async () => {
+      if (!username) return;
+      setIsCheckingUsername(true);
+      setUsernameMessage('');
 
-    const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
-        setIsSubmitting(true)
-        try {
-            const response = await axios.post('/api/sign-up', data)
-            toast({
-                title: '✅ Success',
-                description: response.data.message
-            })
-            router.replace(`/verify/${username}`)
-            setIsSubmitting(false)
-        } catch (error) {
-            console.log("error in sign up", error)
-            const axiosError = error as AxiosError<ApiResponse>
-            const errorMessage = axiosError.response?.data.message
+      try {
+        const res = await axios.get(`/api/check-username-unique?username=${username}`);
+        setUsernameMessage(res.data.message);
+      } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>;
+        setUsernameMessage(axiosError.response?.data.message || 'Something went wrong');
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    };
 
-            toast({
-                title: " ⚠️ Sign-up failed",
-                description: errorMessage,
-                variant: "destructive"
-            })
-            setIsSubmitting(false)
-        }
+    checkUsernameUnique();
+  }, [username]);
+
+  const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
+    setIsSubmitting(true);
+    try {
+      const res = await axios.post('/api/sign-up', data);
+      toast({
+        title: '✅ Success',
+        description: res.data.message,
+      });
+      router.replace(`/verify/${data.username}`);
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiResponse>;
+      toast({
+        title: '⚠️ Sign-up failed',
+        description: axiosError.response?.data.message || 'Something went wrong',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
+  return (
+    <div
+      className="flex justify-center items-center min-h-screen bg-gray-100 px-4"
+      style={{
+        backgroundImage: 'url(/msg.avif)',
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl shadow-black space-y-6">
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold tracking-tight mb-2 text-gray-900">
+            Join Shadow Talk
+          </h1>
+          <p className="text-gray-700 text-sm md:text-base">
+            Create an account to continue
+          </p>
+        </div>
 
-    return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100"
-        style={{
-          backgroundImage: 'url(/msg.avif)',
-          boxSizing: 'border-box' 
-        }}>
-        <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg shadow-black">
-          <div className="text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6 text-center">Join Shadow Talk </h1>
-            <p className="mb-4">Create an account to continue</p> 
-          </div>
-          <Form{...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Username Field */}
             <FormField
-            name="username"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <Input placeholder="write username" {...field}
-                  onChange={(e) => {
-                    field.onChange(e);
-                    debounced(e.target.value);
-                  }}
-                  />
-                </FormControl>
-                {isCheckingUsername && <Loader2 className="h-4 w-4 animate-spin"/>}
-                <p className={`text-sm ${usernameMessage.includes('available') ? 'text-green-600' : 'text-red-600'}`}>
-                  {usernameMessage}
-                </p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="email"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="email" {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="password"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="password" {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" disabled={isSubmitting} className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-            {isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Please wait</>) : 'Sign up'}
-          </Button> 
-            </form>
-          </Form>
-          <div className="text-center mt-4">
-            <p>Already have an account? <Link href="/sign-in" className="text-blue-600 hover:underline">Sign In</Link></p>
-          </div>
+              name="username"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter a username"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        debounced(e.target.value);
+                      }}
+                    />
+                  </FormControl>
+                  {isCheckingUsername && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
+                  {usernameMessage && (
+                    <p
+                      className={`text-sm ${
+                        usernameMessage.toLowerCase().includes('available')
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }`}
+                    >
+                      {usernameMessage}
+                    </p>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Email Field */}
+            <FormField
+              name="email"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="Enter your email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Password Field */}
+            <FormField
+              name="password"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Create a password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Please wait
+                </>
+              ) : (
+                'Sign Up'
+              )}
+            </Button>
+          </form>
+        </Form>
+
+        {/* Footer link */}
+        <div className="text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link href="/sign-in" className="text-blue-600 hover:underline font-medium">
+            Sign in here
+          </Link>
         </div>
       </div>
-    )
-}
+    </div>
+  );
+};
 
-export default Page
+export default Page;
+
