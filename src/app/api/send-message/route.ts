@@ -43,7 +43,7 @@ export async function POST(request:Request){
 
 
     } catch (error) {
-        console.log("failed to send message")
+        console.log("failed to send message",error)
         return Response.json(
             {
                 success:false,
