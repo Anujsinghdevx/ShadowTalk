@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
@@ -14,6 +14,18 @@ interface ExtendedUser extends NextAuthUser {
 
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
+  const [mounted, setMounted] = useState(false);
+
+  // Only render the navbar after the component is mounted on the client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Avoid rendering on the server to prevent hydration issues
+  if (!mounted) {
+    return null;
+  }
+
   const user = session?.user as ExtendedUser | undefined;
 
   return (
@@ -74,3 +86,4 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+
