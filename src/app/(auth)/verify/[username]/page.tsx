@@ -9,8 +9,7 @@ import axios, { AxiosError } from 'axios';
 
 import { verifySchema } from '@/schemas/verifySchema';
 import { ApiResponse } from '@/types/ApiResponse';
-import { UseToast } from '@/hooks/use-toast'; // ✅ No changes
-
+import { UseToast } from '@/hooks/use-toast'; 
 import {
   Form,
   FormControl,
@@ -26,7 +25,7 @@ import { Button } from '@/components/ui/button';
 const VerifyAccount: React.FC = () => {
   const router = useRouter();
   const param = useParams<{ username: string }>();
-  const { toast } = UseToast(); // ✅ No changes
+  const { toast } = UseToast();
 
   const form = useForm<z.infer<typeof verifySchema>>({
     resolver: zodResolver(verifySchema),
