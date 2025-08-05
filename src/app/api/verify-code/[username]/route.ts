@@ -1,16 +1,16 @@
+import { NextRequest } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import UserModel from '@/model/User';
 
-export async function POST(
-  request: Request,
-  { params }: { params: { username: string } }
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function POST(request: NextRequest, context: any) {
   await dbConnect();
 
   try {
     const { code } = await request.json();
 
-    // ✅ Only check for code, not params.username
+    const username = decodeURIComponent(context.params.username);
+
     if (!code) {
       return new Response(
         JSON.stringify({ success: false, message: 'Missing verification code' }),
@@ -18,8 +18,7 @@ export async function POST(
       );
     }
 
-    const decodedUsername = decodeURIComponent(params.username);
-    const user = await UserModel.findOne({ username: decodedUsername });
+    const user = await UserModel.findOne({ username });
 
     if (!user) {
       return new Response(
@@ -43,8 +42,7 @@ export async function POST(
       return new Response(
         JSON.stringify({
           success: false,
-          message:
-            'Verification code has expired. Please sign up again to get a new code.',
+          message: 'Verification code has expired. Please sign up again to get a new code.',
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
