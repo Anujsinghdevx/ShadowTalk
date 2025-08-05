@@ -66,17 +66,35 @@ const Page: React.FC = () => {
 
   const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
     setIsSubmitting(true);
+
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+
     try {
-      const res = await axios.post('/api/sign-up', data);
+      // Step 1: Trigger email API
+      const emailRes = await axios.post('/api/send-verification', {
+        email: data.email,
+        username: data.username,
+        otp: generatedOtp,
+      });
+
       toast({
-        title: '✅ Success',
+        title: '📩 Verification email sent',
+        description: emailRes.data.message,
+      });
+
+      // Step 2: Register user (assuming you still want to call /api/sign-up)
+      const res = await axios.post('/api/sign-up', data); // optional, depending on your backend logic
+      toast({
+        title: '✅ Account created',
         description: res.data.message,
       });
+
+      // Step 3: Redirect to verify page
       router.replace(`/verify/${data.username}`);
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
       toast({
-        title: '⚠️ Sign-up failed',
+        title: '⚠️ Error',
         description: axiosError.response?.data.message || 'Something went wrong',
         variant: 'destructive',
       });
@@ -84,6 +102,7 @@ const Page: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div
@@ -127,11 +146,10 @@ const Page: React.FC = () => {
                   {isCheckingUsername && <Loader2 className="h-4 w-4 animate-spin text-gray-500" />}
                   {usernameMessage && (
                     <p
-                      className={`text-sm ${
-                        usernameMessage.toLowerCase().includes('available')
+                      className={`text-sm ${usernameMessage.toLowerCase().includes('available')
                           ? 'text-green-600'
                           : 'text-red-600'
-                      }`}
+                        }`}
                     >
                       {usernameMessage}
                     </p>
