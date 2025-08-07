@@ -1,15 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import axios, { AxiosError } from 'axios';
+import { motion } from 'framer-motion';
+import { ShieldCheck, KeyRound } from 'lucide-react';
 
 import { verifySchema } from '@/schemas/verifySchema';
 import { ApiResponse } from '@/types/ApiResponse';
-import { UseToast } from '@/hooks/use-toast'; 
+import { UseToast } from '@/hooks/use-toast';
 import {
   Form,
   FormControl,
@@ -26,12 +28,14 @@ const VerifyAccount: React.FC = () => {
   const router = useRouter();
   const param = useParams<{ username: string }>();
   const { toast } = UseToast();
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const form = useForm<z.infer<typeof verifySchema>>({
     resolver: zodResolver(verifySchema),
   });
 
   const onSubmit = async (data: z.infer<typeof verifySchema>) => {
+    setIsVerifying(true);
     try {
       const response = await axios.post(`/api/verify-code/${param.username}`, data);
       toast({
@@ -46,11 +50,13 @@ const VerifyAccount: React.FC = () => {
         description: axiosError.response?.data.message || 'An error occurred',
         variant: 'destructive',
       });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
   return (
-    <div
+    <main
       className="flex justify-center items-center min-h-screen bg-gray-100 px-4"
       style={{
         backgroundImage: 'url(/msg.avif)',
@@ -58,15 +64,20 @@ const VerifyAccount: React.FC = () => {
         backgroundPosition: 'center',
       }}
     >
-      <div className="w-full max-w-md p-8 bg-white  rounded-xl shadow-2xl space-y-6">
-        <div className="text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-2">
-            Verify Your Account
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md p-8 bg-white rounded-xl shadow-2xl space-y-6 shadow-black"
+      >
+        <header className="text-center">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-2 flex items-center justify-center gap-2">
+            <ShieldCheck className="w-6 h-6 text-blue-600" /> Verify Your Account
           </h1>
           <p className="text-sm text-gray-700">
             Enter the verification code sent to your email
           </p>
-        </div>
+        </header>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -75,7 +86,9 @@ const VerifyAccount: React.FC = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Verification Code</FormLabel>
+                  <FormLabel className="flex items-center gap-1">
+                    <KeyRound className="w-4 h-4" /> Verification Code
+                  </FormLabel>
                   <FormControl>
                     <Input placeholder="Enter code here" {...field} />
                   </FormControl>
@@ -87,14 +100,21 @@ const VerifyAccount: React.FC = () => {
 
             <Button
               type="submit"
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+              disabled={isVerifying}
+              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center justify-center gap-2"
             >
-              Submit
+              {isVerifying ? (
+                <span>Verifying...</span>
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4" /> Submit
+                </>
+              )}
             </Button>
           </form>
         </Form>
-      </div>
-    </div>
+      </motion.section>
+    </main>
   );
 };
 

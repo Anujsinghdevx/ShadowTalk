@@ -38,7 +38,7 @@ export async function POST(request:Request){
                 success:true,
                 message:"Message send successfully"
             },
-            {status:403}
+            {status:200}
         )
 
 
