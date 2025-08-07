@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { signInSchema } from '@/schemas/signInSchema';
 
@@ -19,11 +18,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { UseToast } from '@/hooks/use-toast'; // ✅ Kept as YOU wrote it
+import { UseToast } from '@/hooks/use-toast';
 
 const Page: React.FC = () => {
-  const { toast } = UseToast(); // ✅ No change
-  const router = useRouter();
+  const { toast } = UseToast();
 
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -38,6 +36,7 @@ const Page: React.FC = () => {
       redirect: false,
       identifier: data.identifier,
       password: data.password,
+      callbackUrl: '/dashboard',
     });
 
     if (result?.error) {
@@ -49,7 +48,7 @@ const Page: React.FC = () => {
     }
 
     if (result?.url) {
-      router.replace('/dashboard');
+      window.location.href = result.url; 
     }
   };
 
