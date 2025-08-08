@@ -27,7 +27,7 @@
     "dayjs": "^1.11.13",
     "embla-carousel-autoplay": "^8.5.2",
     "embla-carousel-react": "^8.5.2",
-    "framer-motion": "^12.7.4",
+    "framer-motion": "^12.23.12",
     "lucide-react": "^0.474.0",
     "mongoose": "^8.9.6",
     "next": "15.1.6",

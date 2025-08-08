@@ -1,29 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
-export { default } from 'next-auth/middleware';
+// middleware.ts
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
+
+export default withAuth(
+  function middleware(req) {
+    const { pathname } = req.nextUrl;
+    const token = req.nextauth.token;
+
+    // redirect logged-in users away from auth/verify
+    if (token && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up') || pathname.startsWith('/verify'))) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+
+    // redirect logged-out users away from dashboard
+    if (!token && pathname.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/sign-in', req.url));
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: { authorized: () => true }, // let all through; we handle redirects ourselves
+  }
+);
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/sign-in', '/sign-up', '/', '/verify/:path*'],
+  matcher: ['/', '/sign-in', '/sign-up', '/dashboard/:path*', '/verify/:path*'],
 };
-
-export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
-  const url = request.nextUrl;
-
-  
-  if (
-    token &&
-    (url.pathname.startsWith('/sign-in') ||
-      url.pathname.startsWith('/sign-up') ||
-      url.pathname.startsWith('/verify') ||
-      url.pathname === '/')
-  ) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  if (!token && url.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
-  }
-  
-  return NextResponse.next();
-}
