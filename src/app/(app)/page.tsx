@@ -248,10 +248,10 @@ const Page: React.FC = () => {
           </section>
         </main>
 
-        {/* Footer */}
+        {/* Footer
         <footer className="text-center py-6 bg-black text-white/80 text-sm">
           © {new Date().getFullYear()} ShadowTalk. All rights reserved.
-        </footer>
+        </footer> */}
       </>
     </MotionConfig>
   );

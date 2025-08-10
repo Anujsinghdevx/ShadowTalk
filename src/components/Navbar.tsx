@@ -101,7 +101,7 @@ export default function Navbar() {
                 <Button
                   asChild
                   variant="outline"
-                  className="bg-transparent border-white/30 text-white hover:bg-white/10 rounded-xl"
+                  className="bg-transparent border-white/30 text-white hover:text-white hover:bg-white/10 rounded-xl"
                 >
                   <Link href="/sign-in">Login</Link>
                 </Button>
