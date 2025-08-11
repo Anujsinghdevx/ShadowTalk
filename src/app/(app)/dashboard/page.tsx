@@ -36,6 +36,15 @@ import { Loader2, RefreshCcw, CopyCheck, Link as LinkIcon, Inbox } from 'lucide-
 import { MotionConfig, motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { MessageCardGlass } from '@/components/MessageCardGlass';
 
+type Sentiment = {
+  tag: 'POSITIVE' | 'NEGATIVE' | 'UNCERTAIN';
+  confidence?: number;
+  positive_score?: number;
+  negative_score?: number;
+};
+
+type MessageWithSentiment = Message & { sentiment?: Sentiment };
+type FilterKey = 'all' | 'positive' | 'negative' | 'neutral';
 /* -------------------- Motion config (TS-safe) -------------------- */
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
@@ -55,7 +64,6 @@ const sectionReveal = {
 
 /* -------------------- Component -------------------- */
 function UserDashboard() {
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchLoading, setIsSwitchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,9 +85,21 @@ function UserDashboard() {
 
   const profileUrl = useMemo(() => {
     const base = typeof window !== 'undefined' ? window.location.origin : '';
-    const username = (session?.user )?.username;
+    const username = (session?.user)?.username;
     return username ? `${base}/feedback/${username}` : '';
   }, [session?.user]);
+  const [messages, setMessages] = useState<MessageWithSentiment[]>([]);
+  const [buckets, setBuckets] = useState<{
+    positive: MessageWithSentiment[];
+    negative: MessageWithSentiment[];
+    neutral: MessageWithSentiment[];
+  }>({ positive: [], negative: [], neutral: [] });
+
+  const [counts, setCounts] = useState({ positive: 0, negative: 0, neutral: 0 });
+
+  // NEW: current sentiment filter
+  const [filter, setFilter] = useState<FilterKey>('all');
+
 
   const fetchAcceptMessages = useCallback(async () => {
     setIsSwitchLoading(true);
@@ -103,7 +123,17 @@ function UserDashboard() {
       setIsLoading(true);
       try {
         const response = await axios.get<ApiResponse>('/api/get-messages');
-        setMessages(response.data.messages || []);
+        // The API (Option A) returns: { messages, buckets, counts }
+        const {
+          messages: flatMessages = [],
+          buckets: apiBuckets = { positive: [], negative: [], neutral: [] },
+          counts: apiCounts = { positive: 0, negative: 0, neutral: 0 },
+        } = (response.data as any) ?? {};
+
+        setMessages(flatMessages as MessageWithSentiment[]);
+        setBuckets(apiBuckets as typeof buckets);
+        setCounts(apiCounts as typeof counts);
+
         if (refresh) toast({ title: 'Refreshed', description: 'Latest messages loaded.' });
       } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
@@ -118,6 +148,7 @@ function UserDashboard() {
     },
     [toast]
   );
+
 
   useEffect(() => {
     if (!session?.user) return;
@@ -169,11 +200,24 @@ function UserDashboard() {
     }
   };
 
-  if (!session?.user || !mounted) return null;
-
+  const filtered = useMemo(() => {
+    if (filter === 'all') return messages;
+    if (filter === 'positive') return buckets.positive;
+    if (filter === 'negative') return buckets.negative;
+    return buckets.neutral;
+  }, [filter, messages, buckets]);
+ 
   const pageSize = 20;
-  const totalPages = Math.ceil(messages.length / pageSize);
-  const pageSlice = messages.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const pageSlice = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+ 
+  const ready = Boolean(session?.user && mounted);
+
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
+
 
   return (
     <MotionConfig reducedMotion="user">
@@ -329,19 +373,47 @@ function UserDashboard() {
 
           <Separator className="my-6 bg-white/10" />
 
-          {/* Toolbar */}
-          <section className="mb-6 flex justify-end">
-            <motion.div initial="hidden" animate="visible" variants={fadeUp}>
-              <Button
-                onClick={() => fetchMessages(true)}
-                variant="outline"
-                className="border-white/30 text-black hover:text-white hover:bg-white/10"
-              >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-                <span className="ml-2">{isLoading ? 'Refreshing…' : 'Refresh'}</span>
-              </Button>
-            </motion.div>
-          </section>
+          {/* Sentiment Filter */}
+          <motion.section
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            className="mb-4 flex flex-wrap items-center justify-between gap-3"
+          >
+            <div className="inline-flex gap-2">
+              {([
+                { key: 'all', label: 'All', count: messages.length },
+                { key: 'positive', label: 'Positive', count: counts.positive },
+                { key: 'negative', label: 'Negative', count: counts.negative },
+                { key: 'neutral', label: 'Neutral', count: counts.neutral },
+              ] as Array<{ key: FilterKey; label: string; count: number }>).map(({ key, label, count }) => {
+                const active = filter === key;
+                return (
+                  <Button
+                    key={key}
+                    size="sm"
+                    variant={active ? 'default' : 'outline'}
+                    onClick={() => setFilter(key)}
+                    className={active ? '' : 'border-white/30 text-black hover:text-white hover:bg-white/10'}
+                    aria-pressed={active}
+                  >
+                    {label}
+                    <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-xs">{count}</span>
+                  </Button>
+                );
+              })}
+            </div>
+
+            <Button
+              onClick={() => fetchMessages(true)}
+              variant="outline"
+              className="border-white/30 text-black hover:text-white hover:bg-white/10"
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+              <span className="ml-2">{isLoading ? 'Refreshing…' : 'Refresh'}</span>
+            </Button>
+          </motion.section>
+
 
           {/* Messages */}
           <section aria-label="Messages" className="grid grid-cols-1 md:grid-cols-2 gap-6">
