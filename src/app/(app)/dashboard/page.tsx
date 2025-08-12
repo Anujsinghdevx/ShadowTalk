@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
 import Link from 'next/link';
 import axios, { AxiosError } from 'axios';
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -13,7 +14,6 @@ import { UseToast } from '@/hooks/use-toast';
 import { AcceptMessageSchema } from '@/schemas/acceptMessageSchema';
 import { Message } from '@/model/User';
 import { ApiResponse } from '@/types/ApiResponse';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Tooltip,
@@ -32,10 +32,10 @@ import {
 } from 'react-share';
 
 import { Loader2, RefreshCcw, CopyCheck, Link as LinkIcon, Inbox } from 'lucide-react';
-
 import { MotionConfig, motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { MessageCardGlass } from '@/components/MessageCardGlass';
 
+/* -------------------- Types -------------------- */
 type Sentiment = {
   tag: 'POSITIVE' | 'NEGATIVE' | 'UNCERTAIN';
   confidence?: number;
@@ -43,9 +43,34 @@ type Sentiment = {
   negative_score?: number;
 };
 
-type MessageWithSentiment = Message & { sentiment?: Sentiment };
+type MessageWithSentiment = Message & { sentiment?: Sentiment; _id: string };
+
 type FilterKey = 'all' | 'positive' | 'negative' | 'neutral';
-/* -------------------- Motion config (TS-safe) -------------------- */
+
+type Buckets = {
+  positive: MessageWithSentiment[];
+  negative: MessageWithSentiment[];
+  neutral: MessageWithSentiment[];
+};
+
+type Counts = {
+  positive: number;
+  negative: number;
+  neutral: number;
+};
+
+type AcceptMessageForm = z.infer<typeof AcceptMessageSchema>;
+
+interface ApiMessagesResponse {
+  messages: MessageWithSentiment[];
+  buckets: Buckets;
+  counts: Counts;
+}
+
+interface SessionUser {
+  username?: string;
+}
+
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 const fadeUp = {
@@ -63,54 +88,47 @@ const sectionReveal = {
 } as const;
 
 /* -------------------- Component -------------------- */
-function UserDashboard() {
+function UserDashboard(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchLoading, setIsSwitchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [copied, setCopied] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
+  const [, setMounted] = useState(false);
   const { toast } = UseToast();
   const { data: session } = useSession();
   const prefersReduced = useReducedMotion();
 
-  const form = useForm({
+  const form = useForm<AcceptMessageForm>({
     resolver: zodResolver(AcceptMessageSchema),
     defaultValues: { acceptMessages: false },
   });
-  const { register, watch, setValue } = form;
+  const { watch, setValue } = form;
   const acceptMessages = watch('acceptMessages');
 
   useEffect(() => setMounted(true), []);
 
   const profileUrl = useMemo(() => {
     const base = typeof window !== 'undefined' ? window.location.origin : '';
-    const username = (session?.user)?.username;
+    const username = (session?.user as SessionUser | undefined)?.username;
     return username ? `${base}/feedback/${username}` : '';
   }, [session?.user]);
+
   const [messages, setMessages] = useState<MessageWithSentiment[]>([]);
-  const [buckets, setBuckets] = useState<{
-    positive: MessageWithSentiment[];
-    negative: MessageWithSentiment[];
-    neutral: MessageWithSentiment[];
-  }>({ positive: [], negative: [], neutral: [] });
+  const [buckets, setBuckets] = useState<Buckets>({ positive: [], negative: [], neutral: [] });
+  const [counts, setCounts] = useState<Counts>({ positive: 0, negative: 0, neutral: 0 });
 
-  const [counts, setCounts] = useState({ positive: 0, negative: 0, neutral: 0 });
-
-  // NEW: current sentiment filter
   const [filter, setFilter] = useState<FilterKey>('all');
-
 
   const fetchAcceptMessages = useCallback(async () => {
     setIsSwitchLoading(true);
     try {
-      const response = await axios.get<ApiResponse>('/api/accept-messages');
-      setValue('acceptMessages', Boolean(response.data.isAcceptingMessages));
+      const response = await axios.get<{ isAcceptingMessages: boolean }>('/api/accept-messages');
+      setValue('acceptMessages', Boolean(response.data.isAcceptingMessages), { shouldDirty: false });
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
       toast({
         title: 'Error',
-        description: axiosError.response?.data.message ?? 'Failed to fetch message settings',
+        description: axiosError.response?.data?.message ?? 'Failed to fetch message settings',
         variant: 'destructive',
       });
     } finally {
@@ -122,24 +140,16 @@ function UserDashboard() {
     async (refresh: boolean = false) => {
       setIsLoading(true);
       try {
-        const response = await axios.get<ApiResponse>('/api/get-messages');
-        // The API (Option A) returns: { messages, buckets, counts }
-        const {
-          messages: flatMessages = [],
-          buckets: apiBuckets = { positive: [], negative: [], neutral: [] },
-          counts: apiCounts = { positive: 0, negative: 0, neutral: 0 },
-        } = (response.data as any) ?? {};
-
-        setMessages(flatMessages as MessageWithSentiment[]);
-        setBuckets(apiBuckets as typeof buckets);
-        setCounts(apiCounts as typeof counts);
-
+        const response = await axios.get<ApiMessagesResponse>('/api/get-messages');
+        setMessages(response.data.messages);
+        setBuckets(response.data.buckets);
+        setCounts(response.data.counts);
         if (refresh) toast({ title: 'Refreshed', description: 'Latest messages loaded.' });
       } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
         toast({
           title: 'Error',
-          description: axiosError.response?.data.message ?? 'Failed to fetch messages',
+          description: axiosError.response?.data?.message ?? 'Failed to fetch messages',
           variant: 'default',
         });
       } finally {
@@ -149,26 +159,26 @@ function UserDashboard() {
     [toast]
   );
 
-
   useEffect(() => {
     if (!session?.user) return;
     fetchMessages();
     fetchAcceptMessages();
-  }, [session, fetchMessages, fetchAcceptMessages]);
+  }, [session?.user, fetchMessages, fetchAcceptMessages]);
 
-  const handleSwitchChange = async () => {
-    const next = !acceptMessages;
+  const handleSwitchChange = async (next: boolean) => {
     setValue('acceptMessages', next, { shouldDirty: true });
     setIsSwitchLoading(true);
     try {
-      const response = await axios.post<ApiResponse>('/api/accept-messages', { acceptMessages: next });
-      toast({ title: response.data.message });
+      const response = await axios.post<{ message: string }>('/api/accept-messages', {
+        acceptMessages: next,
+      });
+      toast({ title: response.data.message ?? 'Updated' });
     } catch (error) {
       setValue('acceptMessages', !next, { shouldDirty: false });
       const axiosError = error as AxiosError<ApiResponse>;
       toast({
         title: 'Error',
-        description: axiosError.response?.data.message ?? 'Update failed',
+        description: axiosError.response?.data?.message ?? 'Update failed',
         variant: 'destructive',
       });
     } finally {
@@ -178,6 +188,16 @@ function UserDashboard() {
 
   const handleDeleteMessage = (messageId: string) => {
     setMessages((prev) => prev.filter((m) => m._id !== messageId));
+    setBuckets((prev) => ({
+      positive: prev.positive.filter((m) => m._id !== messageId),
+      negative: prev.negative.filter((m) => m._id !== messageId),
+      neutral: prev.neutral.filter((m) => m._id !== messageId),
+    }));
+    setCounts((prev) => ({
+      positive: Math.max(0, prev.positive - 1),
+      negative: Math.max(0, prev.negative - 1),
+      neutral: Math.max(0, prev.neutral - 1),
+    }));
   };
 
   const copyToClipboard = async () => {
@@ -206,26 +226,21 @@ function UserDashboard() {
     if (filter === 'negative') return buckets.negative;
     return buckets.neutral;
   }, [filter, messages, buckets]);
- 
+
   const pageSize = 20;
   const totalPages = Math.ceil(filtered.length / pageSize);
   const pageSlice = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
- 
-  const ready = Boolean(session?.user && mounted);
-
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filter]);
 
-
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig>
       <main
         className="relative min-h-dvh pt-10 overflow-x-clip text-white"
         aria-label="Dashboard"
       >
-        {/* Background to match auth/about/home */}
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10 bg-[radial-gradient(60%_60%_at_50%_0%,#312e81_0%,#0b1021_45%,#000_100%)]"
@@ -360,9 +375,8 @@ function UserDashboard() {
           >
             <div className="inline-flex items-center rounded-xl border border-white/10 bg-white/10 backdrop-blur-md px-4 py-3">
               <Switch
-                {...register('acceptMessages')}
                 checked={acceptMessages}
-                onCheckedChange={handleSwitchChange}
+                onCheckedChange={(checked) => handleSwitchChange(Boolean(checked))}
                 disabled={isSwitchLoading}
               />
               <span className="ml-3 text-sm font-medium text-white/90">
@@ -414,7 +428,6 @@ function UserDashboard() {
             </Button>
           </motion.section>
 
-
           {/* Messages */}
           <section aria-label="Messages" className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AnimatePresence mode="wait">
@@ -431,10 +444,9 @@ function UserDashboard() {
                 ))
               ) : messages.length > 0 ? (
                 pageSlice.map((message, index) => {
-                  const safeMessage = { ...message, _id: String(message._id) };
                   return (
                     <motion.div
-                      key={safeMessage._id as React.Key}
+                      key={message._id}
                       initial={{ opacity: 0, y: 20, scale: 0.97 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.97 }}
@@ -443,7 +455,7 @@ function UserDashboard() {
                       transition={{ duration: 0.28, delay: index * 0.03, ease: EASE_OUT }}
                     >
                       <MessageCardGlass
-                        message={safeMessage}
+                        message={message}
                         onDelete={handleDeleteMessage}
                       />
                     </motion.div>
