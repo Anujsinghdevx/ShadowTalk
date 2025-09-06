@@ -1,4 +1,3 @@
-// app/api/get-messages/route.ts
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/options";
 import dbConnect from "@/lib/dbConnect";
@@ -6,7 +5,6 @@ import UserModel from "@/model/User";
 import type { User } from "next-auth";
 import mongoose from "mongoose";
 
-/** ========= Types ========= */
 type SentimentTag = "POSITIVE" | "NEGATIVE" | "UNCERTAIN";
 
 interface SentimentItem {
@@ -32,7 +30,6 @@ interface MessageDoc {
   message?: string;
   content?: string;
   createdAt?: string | Date;
-  // Allow other fields from your schema without using `any`
   [key: string]: unknown;
 }
 
@@ -50,7 +47,7 @@ interface Buckets<T> {
 type MessageWithSentiment = MessageDoc & { sentiment?: SentimentItem | null };
 
 /** ========= Config ========= */
-const SENTIMENT_URL = process.env.SENTIMENT_URL as string; // e.g. https://your-worker.workers.dev
+const SENTIMENT_URL = process.env.SENTIMENT_URL as string; 
 const SENTIMENT_TOKEN = process.env.SENTIMENT_TOKEN as string | undefined;
 
 function isSentimentBatchResponse(x: unknown): x is SentimentBatchResponse {
