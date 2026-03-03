@@ -35,7 +35,6 @@ import { Loader2, RefreshCcw, CopyCheck, Link as LinkIcon, Inbox } from 'lucide-
 import { MotionConfig, motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { MessageCardGlass } from '@/components/MessageCardGlass';
 
-/* -------------------- Types -------------------- */
 type Sentiment = {
   tag: 'POSITIVE' | 'NEGATIVE' | 'UNCERTAIN';
   confidence?: number;
@@ -87,7 +86,6 @@ const sectionReveal = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE_OUT } },
 } as const;
 
-/* -------------------- Component -------------------- */
 function UserDashboard(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchLoading, setIsSwitchLoading] = useState(false);

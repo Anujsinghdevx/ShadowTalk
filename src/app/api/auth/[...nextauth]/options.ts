@@ -1,8 +1,8 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import dbConnect from '@/lib/dbConnect';  // Make sure to have a dbConnect function
-import UserModel from '@/model/User';  // Import your User model
+import dbConnect from '@/lib/dbConnect'; 
+import UserModel from '@/model/User'; 
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,9 +13,8 @@ export const authOptions: NextAuthOptions = {
         identifier: { label: 'Email or Username', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      //@ts-expect-error : Ignoring type error here 
+      //@ts-expect-error
       async authorize(credentials) {
-        // Ensuring dbConnect is called to connect to MongoDB
         await dbConnect();
 
         if (!credentials || !credentials.identifier || !credentials.password) {
@@ -34,19 +33,17 @@ export const authOptions: NextAuthOptions = {
             throw new Error('No user found with this email/username');
           }
 
-          // Check if the user is verified
           if (!user.isVerified) {
             throw new Error('Please verify your account before logging in');
           }
 
-          // Compare password
           const isPasswordCorrect = await bcrypt.compare(
             credentials.password,
             user.password
           );
 
           if (isPasswordCorrect) {
-            // If password matches, return user object
+           
             return {
               _id: user.id.toString(),
               username: user.username,
@@ -61,7 +58,7 @@ export const authOptions: NextAuthOptions = {
           if (err instanceof Error) {
             throw new Error(err.message || 'An error occurred during authentication');
           } else {
-            // Fallback in case the error doesn't have the expected shape
+           
             throw new Error('An unknown error occurred during authentication');
         }
       }
@@ -70,7 +67,6 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    // JWT callback to store additional user data
     async jwt({ token, user }) {
       if (user) {
         token._id = user._id;
@@ -82,7 +78,6 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
 
-    // Session callback to provide user info in the session
     async session({ session, token }) {
       if (token) {
         session.user._id = token._id;
@@ -96,11 +91,11 @@ export const authOptions: NextAuthOptions = {
   },
 
   session: {
-    strategy: 'jwt', // Use JWT strategy for stateless authentication
+    strategy: 'jwt',
   },
 
-  secret: process.env.NEXTAUTH_SECRET, // Secret for JWT signing (you can generate one)
+  secret: process.env.NEXTAUTH_SECRET, 
   pages: {
-    signIn: '/sign-in', // Custom sign-in page
+    signIn: '/sign-in', 
   },
 };

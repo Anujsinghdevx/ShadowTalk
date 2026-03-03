@@ -48,7 +48,6 @@ export default function Page() {
     mode: 'onBlur',
   });
 
-  // --- Username availability check ---
   useEffect(() => {
     const checkUsernameUnique = async () => {
       if (!username) return;
@@ -67,7 +66,6 @@ export default function Page() {
     checkUsernameUnique();
   }, [username]);
 
-  // --- Password strength (client hint only) ---
   const password = form.watch('password');
   const strength = useMemo(() => {
     if (!password) return 0;
@@ -84,7 +82,6 @@ export default function Page() {
   const strengthColor =
     ['bg-red-500','bg-orange-500','bg-yellow-500','bg-lime-500','bg-green-500','bg-emerald-500'][strength] || 'bg-red-500';
 
-  // --- Submit ---
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();

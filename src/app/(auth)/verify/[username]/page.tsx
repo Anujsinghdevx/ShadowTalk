@@ -28,7 +28,6 @@ import { Button } from "@/components/ui/button";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const OTP_LENGTH = 6;
-// Change if your resend endpoint differs:
 const RESEND_ENDPOINT = (username: string) => `/api/resend-code/${username}`;
 
 type VerifyValues = z.infer<typeof verifySchema>;
@@ -50,13 +49,11 @@ export default function VerifyAccount() {
     mode: "onSubmit",
   });
 
-  // Tie segmented OTP -> form value
   useEffect(() => {
     form.setValue("code", otp.join(""), { shouldValidate: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otp]);
 
-  // Simple cooldown timer for resend
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setInterval(() => setCooldown((c) => c - 1), 1000);

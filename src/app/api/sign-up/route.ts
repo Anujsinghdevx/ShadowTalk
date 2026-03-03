@@ -8,7 +8,6 @@ export async function POST(request: Request) {
   try {
     const { username, email, password } = await request.json();
 
-    // Check username by verified users
     const existingVerifiedUserByUsername = await UserModel.findOne({
       username,
       isVerified: true,
@@ -23,7 +22,6 @@ export async function POST(request: Request) {
 
     const existingUserByEmail = await UserModel.findOne({ email });
 
-    // Generate OTP and expiry
     const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
     const verifyCodeExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
@@ -58,7 +56,6 @@ export async function POST(request: Request) {
       await newUser.save();
     }
 
-    // ✅ Call the new /api/send-verification API
     const baseUrl =
       process.env.NODE_ENV === 'development'
         ? 'http://localhost:3000'

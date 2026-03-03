@@ -14,17 +14,14 @@ import {
   CarouselItem,
 } from '@/components/ui/carousel';
 
-// Types
 interface Message {
   title: string;
   content: string;
   received: string;
 }
 
-// Easing (typed, TS-safe)
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
-// Variants (typed)
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i = 0) => ({

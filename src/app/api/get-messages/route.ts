@@ -46,7 +46,6 @@ interface Buckets<T> {
 
 type MessageWithSentiment = MessageDoc & { sentiment?: SentimentItem | null };
 
-/** ========= Config ========= */
 const SENTIMENT_URL = process.env.SENTIMENT_URL as string; 
 const SENTIMENT_TOKEN = process.env.SENTIMENT_TOKEN as string | undefined;
 
@@ -95,7 +94,6 @@ export async function GET() {
       });
     }
 
-    // Build texts safely (map actual field names you store)
     const texts: string[] = messages
       .map((m) => String((m.text ?? m.message ?? m.content ?? "") as string).trim())
       .filter((t) => t.length > 0);
@@ -116,7 +114,6 @@ export async function GET() {
       ...(SENTIMENT_TOKEN ? { Authorization: `Bearer ${SENTIMENT_TOKEN}` } : {})
     };
 
-    // --- Try batch first
     let results: (SentimentItem | null)[] | null = null;
     try {
       const batch = await fetch(workerUrl, {
@@ -132,10 +129,8 @@ export async function GET() {
         }
       }
     } catch {
-      // fall through to per-item
     }
 
-    // --- Fallback: per-text calls
     if (!results || results.length !== texts.length) {
       const classifyOne = async (text: string): Promise<SentimentItem | null> => {
         try {
@@ -158,12 +153,10 @@ export async function GET() {
       results = await Promise.all(texts.map((t) => classifyOne(t)));
     }
 
-    // Ensure results array length matches messages length
     const normalized: (SentimentItem | null)[] = Array.from({ length: messages.length }, (_, i) =>
       (results && results[i]) ? results[i] : null
     );
 
-    // Bucket
     const buckets: Buckets<MessageWithSentiment> = { positive: [], negative: [], neutral: [] };
     messages.forEach((msg, i) => {
       const s = normalized[i];

@@ -27,7 +27,6 @@ import { messageSchema } from '@/schemas/messageSchema';
 
 type FormValues = z.infer<typeof messageSchema>;
 
-// If your schema has a max length, set the same number here to keep UX in sync.
 const MAX_CHARS = 500;
 
 const EASE = [0.22, 1, 0.36, 1] as const;

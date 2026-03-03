@@ -66,7 +66,6 @@ export async function POST(req: Request) {
     const safeUsername = sanitizeInput(username.trim());
     const safeOtp = sanitizeInput(otp.trim());
 
-    // Composing similar to @react-email styled email
     const html = `
       <div style="font-family: Roboto, Verdana, sans-serif; line-height: 1.6; color: #333;">
         <h2>Hello ${safeUsername},</h2>
